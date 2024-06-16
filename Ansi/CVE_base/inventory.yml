@@ -1,0 +1,12 @@
+[win]
+192.168.83.214 ansible_ssh_user=root ansible_ssh_password=root
+[win:vars]
+ansible_connection=ssh
+ansible_shell_type=cmd
+#ansible_password=root
+#ansible_port=5985
+#ansible_winrm_server_cert_validation=ignore
+[linux]
+srvubu1 ansible_host=192.168.83.217 ansible_ssh_user=srvubu1 ansible_ssh_password=root
+srvubu2 ansible_host=192.168.83.216 ansible_ssh_user=srvubu ansible_ssh_password=qwe1243
+debsrv1 ansible_host=192.168.83.219 ansible_ssh_user=root ansible_ssh_password=root

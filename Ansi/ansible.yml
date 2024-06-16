@@ -1,0 +1,8 @@
+[defaults]
+host_key_checking = False
+ansible_playbooks_dir = ~kali/Ansi
+inventory = inventory.yml
+#ansible_connection: winrm
+#ansible_user: root
+#ansible_password: root
+

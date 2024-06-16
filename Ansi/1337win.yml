@@ -1,0 +1,15 @@
+- hosts: win
+  tasks:
+ 
+  - name: Firewall rule to allow UDP on 1337
+    win_firewall_rule:
+      name: Ez Ansible
+      localport: 1337
+      action: allow
+      direction: in
+      protocol: udp
+      profiles: [private]
+      state: present
+      enabled: yes
+
+

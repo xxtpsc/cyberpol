@@ -1,0 +1,10 @@
+- hosts: all 
+  become: yes
+  tasks:    
+    - name: Add APT pinning configuration to prevent Samba installation
+      copy:
+        dest: /etc/apt/preferences.d/00-samba
+        content: |
+          Package: samba
+          Pin: release *
+          Pin-Priority: -1

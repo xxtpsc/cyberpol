@@ -1,0 +1,10 @@
+---
+- name: Создание пользователя с пустым паролем
+  hosts: debsrv10 
+  become: yes
+
+  tasks:
+    - name: Создать пользователя
+      user:
+        name: User
+        password: ""

@@ -1,0 +1,21 @@
+- hosts: debsrv1
+  become: yes
+  tasks:
+    - name: Install vsftpd
+      apt:
+        name: vsftpd
+        state: present
+
+    - name: Allow insecure commands
+      lineinfile:
+        path: /etc/vsftpd.conf
+        regexp: '^#?cmds_allowed'
+        line: 'cmds_allowed=ALL'
+      notify: restart vsftpd
+
+  handlers:
+    - name: restart vsftpd
+      systemd:
+        name: vsftpd
+        state: restarted
+

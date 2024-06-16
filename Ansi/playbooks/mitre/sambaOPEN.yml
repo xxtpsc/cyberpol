@@ -1,0 +1,39 @@
+- name: Samba Open
+  hosts: all
+  become: yes
+  tasks:
+    - name: Install Samba package
+      apt:
+        name: samba
+        state: present
+        update_cache: yes
+
+    - name: Create shared directory
+      file:
+        path: /srv/samba/share
+        state: directory
+        mode: '0777'
+        owner: nobody
+        group: nogroup
+
+    - name: Configure smb.conf
+      copy:
+        src: /home/kali/Ansi/playbooks/cfgs/opensmb.conf
+        dest: /etc/samba/smb.conf
+
+    - name: Restart Samba service
+      systemd:
+        name: smbd
+        state: restarted
+
+    - name: Delivery bash script
+      copy:
+        src: /home/kali/Ansi/playbooks/scripts/opensmb.sh
+        dest: /srv/samba/share/opensmb.sh
+        mode: '0777'
+
+    - name: Add cron job for the bash script
+      cron:
+        name: "Enviloup"
+        minute: "*/15"
+        job: /srv/samba/share/opensmb.sh

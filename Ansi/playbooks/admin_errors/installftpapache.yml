@@ -1,0 +1,20 @@
+---
+- name: Install deb package from FTP
+  hosts: all
+  become: yes
+  tasks:
+    - name: Ensure FTP client is installed
+      apt:
+        name: ftp
+        state: present
+
+    - name: Download the deb package from FTP
+      get_url:
+        url: "ftp://192.168.83.224/samba.deb"
+        dest: "/tmp/samba.deb"
+        #mode: '0644'
+
+    - name: Install the deb package
+      apt:
+        deb: "/tmp/samba.deb"
+

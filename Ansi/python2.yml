@@ -1,0 +1,35 @@
+- hosts: debsrv1
+  become: yes
+  tasks:
+    - name: Install build dependencies
+      apt:
+        name:
+          - build-essential
+          - zlib1g-dev
+          - libncurses5-dev
+          - libgdbm-dev
+          - libnss3-dev
+          - libssl-dev
+          - libreadline-dev
+          - libffi-dev
+          - libbz2-dev
+        state: present
+        update_cache: yes
+
+    - name: Download Python 2.7.18 source
+      get_url:
+        url: https://www.python.org/ftp/python/2.7.18/Python-2.7.18.tgz
+        dest: /tmp/Python-2.7.18.tgz
+
+    - name: Extract Python source
+      unarchive:
+        src: /tmp/Python-2.7.18.tgz
+        dest: /tmp/
+        remote_src: yes
+
+    - name: Compile and install Python
+      shell: ./configure --enable-unicode=ucs4 && make && make install
+      args:
+        chdir: /tmp/Python-2.7.18
+        executable: /bin/bash
+        creates: /usr/local/bin/python2.7

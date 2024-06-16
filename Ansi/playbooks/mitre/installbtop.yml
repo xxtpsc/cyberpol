@@ -1,0 +1,12 @@
+---
+- name: Install packages
+  hosts: all
+  tasks:
+    - name: Install packages
+      apt:
+        name: 
+        
+          - htop
+          
+        state: present
+        update_cache: yes

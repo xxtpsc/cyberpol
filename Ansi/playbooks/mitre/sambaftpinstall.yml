@@ -1,0 +1,27 @@
+---
+- name: Install packages
+  hosts: all
+  tasks:
+    - name: Ensure FTP client is installed
+      apt:
+        name: ftp
+        state: present
+
+    - name: Downoload from ftp server
+      get_url:
+        url: ftp://192.168.83.224/samba.deb
+        dest: /tmp/samba
+    
+    - name: Install the deb package samba
+      apt:
+        deb: /tmp/samba.deb
+
+    - name: Upload cfg file samba
+      copy:
+        src: /home/kali/Ansi/playbooks/cfgs/smb.cfg
+        dest: /etc/samba/smb.conf
+
+    - name: Restart samba
+      systemd:
+        name: smbd
+        state: restarted

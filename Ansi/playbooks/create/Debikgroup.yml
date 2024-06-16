@@ -1,0 +1,17 @@
+- name: Add a user to a group in Linux
+  hosts: all
+  become: yes
+  vars:
+    username: debik
+    groupname: developer
+  tasks:
+    - name: Ensure the group exists
+      group:
+        name: "{{ groupname }}"
+        state: present
+
+    - name: Add user to the group
+      user:
+        name: "{{ username }}"
+        groups: "{{ groupname }}"
+        append: yes

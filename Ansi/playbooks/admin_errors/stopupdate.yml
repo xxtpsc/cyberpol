@@ -1,0 +1,7 @@
+- name: Hold Samba package to prevent updates
+  hosts: debsrv24
+  become: yes
+  tasks:
+    - name: Hold Samba package
+      command:
+        cmd: apt-mark hold samba

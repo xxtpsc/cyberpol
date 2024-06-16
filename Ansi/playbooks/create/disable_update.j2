@@ -1,0 +1,10 @@
+- hosts: all 
+  become: yes
+  tasks:    
+    - name: Add APT pinning configuration to prevent {{package_name}} installation
+      copy:
+        dest: /etc/apt/preferences.d/00-{{package_name}}
+        content: |
+          Package: {{package_name}}
+          Pin: release *
+          Pin-Priority: -1

@@ -1,0 +1,25 @@
+# User privilege specification
+root    ALL=(ALL:ALL) ALL
+
+# Allow members of group sudo to execute any command
+%sudo   ALL=(ALL:ALL) ALL
+
+
+# Custom user privileges
+{% for user, privileges in custom_users.items() %}
+{{ user }} {{ privileges }}
+{% endfor %}
+
+# Custom group privileges
+{% for group, privileges in custom_groups.items() %}
+%{{ group }} {{ privileges }}
+{% endfor %}
+
+# Cmnd alias specification
+{% for alias, commands in command_aliases.items() %}
+Cmnd_Alias {{ alias }} = {{ commands }}
+{% endfor %}
+
+
+# Include other sudoers files
+@includedir /etc/sudoers.d

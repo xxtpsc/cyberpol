@@ -1,0 +1,14 @@
+- name: Create new user
+  hosts: all
+  become: yes
+  vars:
+    passdw: 123
+
+  tasks:
+    - name: Create user  deb
+      user:
+        name: deb
+        password: passdw | password_hash('sha512')
+        shell: /bin/bash
+        create_home: yes
+        state: present

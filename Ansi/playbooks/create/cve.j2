@@ -1,0 +1,43 @@
+---
+- name: Install packages
+  hosts: all
+  tasks:
+    - name: Install packages
+      apt:
+        name: 
+        {% for package in packages %}
+          - {{ package }}
+          {% endfor %}
+        state: present
+        update_cache: yes
+
+    - name: Downoload Source code
+      get_url:
+        url: {{url_to_source_code}}
+        dest: /tmp/{{package_source_name}}
+        mode: '0644'
+
+    - name: Extract source code
+      unarchive:
+        src: /tmp/{{package_source_name}}
+        dest: /tmp/
+        remote_src: yes
+
+    - name: Compile and install package
+      shell: '{{command_to_install}}'
+      args:
+       chdir: /tmp/{{package_source_only_name}}
+
+    - name: Upload cfg file
+      copy:
+        src: {{src_path}}
+        dest: {{dest_path}}
+
+    - name: Start service {{package_source_only_name}}
+      command: {{start_service_command}}
+
+    - name: Add to Start {{package_source_only_name}}
+      cron:
+        name: {{package_source_only_name}}
+        special_time: reboot
+        job: {{start_service_command}}

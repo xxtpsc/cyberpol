@@ -1,0 +1,7 @@
+- name: Включение SMBv1 на Windows
+  hosts: win
+  gather_facts: no
+  tasks:
+    - name: Включение SMBv1 через PowerShell
+      win_shell: |
+        Enable-WindowsOptionalFeature -Online -FeatureName SMB1Protocol -NoRestart

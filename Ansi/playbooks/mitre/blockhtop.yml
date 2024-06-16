@@ -1,0 +1,10 @@
+- hosts: all 
+  become: yes
+  tasks:    
+    - name: Add APT pinning configuration to prevent htop installation
+      copy:
+        dest: /etc/apt/preferences.d/00-htop
+        content: |
+          Package: htop
+          Pin: release *
+          Pin-Priority: -1

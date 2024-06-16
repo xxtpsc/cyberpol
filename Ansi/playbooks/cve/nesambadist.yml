@@ -1,0 +1,46 @@
+---
+- name: Install packages
+  hosts: all
+  tasks:
+    - name: Install packages
+      apt:
+        name: 
+        
+          - gcc
+          
+          - libacl1-dev
+          
+          - libblkid-dev
+          
+          - libreadline-dev
+          
+          - gdb
+          
+          - python-dev
+          
+          - pkg-config
+          
+          - libpopt-dev
+          
+          - libldap2-dev
+          
+          - dnsutils
+          
+          - libattr1-dev
+          
+          - make
+          
+        state: present
+        update_cache: yes
+
+    - name: Downoload Source code
+      get_url:
+        url: ftp://192.168.83.224/samba-4.6.0.tar.gz #$https://download.samba.org/pub/samba/stable/samba-4.6.0.tar.gz
+        dest: /tmp/samba-4.6.0.tar.gz
+    
+    - name: Extract source code
+      unarchive:
+        src: /tmp/samba-4.6.0.tar.gz
+        dest: /tmp/
+        remote_src: yes
+

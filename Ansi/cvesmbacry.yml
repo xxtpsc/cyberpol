@@ -1,0 +1,25 @@
+- hosts: debsrv1
+  become: yes
+  tasks:
+    - name: Install vulnerable Samba version
+      apt:
+        name: samba
+        state: present
+        version: '4.5.10'
+
+    - name: Configure Samba for SambaCry
+      blockinfile:
+        path: /etc/samba/smb.conf
+        block: |
+          [global]
+          nt pipe support = yes
+          [public]
+          path = /tmp
+          writable = yes
+          guest ok = yes
+        marker: "# {mark} ANSIBLE MANAGED BLOCK"
+
+    - name: Restart Samba
+      systemd:
+        name: smbd
+        state: restarted

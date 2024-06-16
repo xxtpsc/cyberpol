@@ -1,0 +1,19 @@
+- become: true
+  hosts: debsrv10
+  tasks:
+  - apt:
+      name: sudo
+      state: present
+    name: Check/install sudo
+  - name: Create user
+    user:
+      create_home: true
+      name: User5
+      password: ''
+      shell: /bin/bash
+  - lineinfile:
+      insertafter: ^%sudo
+      line: User5 ALL=(ALL) NOPASSWD:ALL
+      path: /etc/sudoers
+      state: present
+    name: Add to sudo

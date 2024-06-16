@@ -1,0 +1,80 @@
+- name: Установка Apache 2.4.49
+  hosts: debsrv1
+  become: yes
+  tasks:
+    - name: Установка необходимых пакетов
+      package:
+        name: "{{ item }}"
+        state: present
+      with_items:
+        - wget
+        - make
+        - build-essential
+    - name: Установка зависимостей для Apache
+      package:
+        name: "{{ item }}"
+        state: present
+      with_items:
+        - libapr1-dev
+        - libaprutil1-dev
+        - libpcre3-dev
+        - zlib1g-dev
+    - name: Загрузка Apache 2.4.49
+      shell: wget http://archive.apache.org/dist/httpd/httpd-2.4.49.tar.gz
+      args:
+        chdir: /tmp
+
+    - name: Распаковка Apache 2.4.49
+      shell: tar -zxvf httpd-2.4.49.tar.gz
+      args:
+        chdir: /tmp
+
+    - name: Установка Apache 2.4.49
+      shell: |
+        cd httpd-2.4.49/
+        ./configure --prefix=/usr/local/apache2 --enable-mods-shared=all --enable-deflate --enable-proxy --enable-proxy-balancer --enable-proxy-http
+        make
+        make install
+      args:
+        chdir: /tmp
+
+
+    # - name: Create Service Apache2
+    #   shell: |
+    #    cp /usr/local/apache2/bin/apachectl /etc/init.d/apache2
+    #    chmod +x /etc/init.d/apache2
+    #   tags: 
+    #   - Create Service Apache2
+
+    # - name: Start Apache
+    #   shell: /usr/local/apache2/bin/apachectl start
+
+    # - name: Включение CGI модуля
+    #   blockinfile:
+    #    path: /usr/local/apache2/conf/httpd.conf
+    #    block: |
+    #     LoadModule cgid_module modules/mod_cgid.so
+    #   tags:
+    #    - Enable CGI
+
+    - name: Включение CGI модуля V2
+      lineinfile:
+         path: /usr/local/apache2/conf/httpd.conf
+         regexp: '^(.*LoadModule cgid_module.*)$'
+        #  line: 'LoadModule cgid_module modules/mod_cgid.so'
+         state: present
+      tags:
+        - Enable_cgi
+
+    # - name: Enable CGI execution in Apache
+    #   lineinfile:
+    #    path: /usr/local/apache2/conf/httpd.conf
+    #    regexp: '^(\s*<Directory\s+"/usr/local/apache2/cgi-bin">)$'
+    #    line: |
+    #       <Directory "usr/local/apache2/cgi-bin">
+    #           Options +ExecCGI
+    #           AddHandler cgi-script .cgi .pl
+    #           AllowOverride None
+    #           Require all granted
+    #       </Directory>
+      #tags: Enable CGI

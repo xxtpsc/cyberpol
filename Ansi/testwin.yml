@@ -1,0 +1,10 @@
+- name: Создание пользователя на Windows
+  hosts: win
+  gather_facts: no
+  tasks:
+    - name: Создание пользователя
+      win_user:
+        name: User1
+        password: qq1234
+        state: present
+        groups: ["Пользователи"]  

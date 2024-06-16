@@ -1,0 +1,54 @@
+---
+- name: Install packages
+  hosts: all
+  tasks:
+    - name: Install packages
+      apt:
+        name: 
+        
+          - wget
+          
+          - make
+          
+          - build-essential
+          
+          - libapr1-dev
+          
+          - libaprutil1-dev
+          
+          - libpcre3-dev
+          
+          - zlib1g-dev
+          
+        state: present
+        update_cache: yes
+
+    - name: Downoload Source code
+      get_url:
+        url: http://archive.apache.org/dist/httpd/httpd-2.4.49.tar.gz
+        dest: /tmp/httpd-2.4.49.tar.gz
+    
+    - name: Extract source code
+      unarchive:
+        src: /tmp/httpd-2.4.49.tar.gz
+        dest: /tmp/
+        remote_src: yes
+
+    - name: Compile and install package
+      shell: "./configure --prefix=/usr/local/apache2 --enable-mods-shared=all --enable-deflate --enable-proxy --enable-proxy-balancer --enable-proxy-http && make && make install"
+      args:
+       chdir: /tmp/httpd-2.4.49
+
+    - name: Upload cfg file
+      copy:
+        src: /home/kali/Ansi/playbooks/cfgs/nhttpd.conf
+        dest: /usr/local/apache2/conf/httpd.conf
+
+    - name: Start service
+      command: /usr/local/apache2/bin/apachectl
+
+    - name: Add to Start httpd-2.4.49.tar.gz
+      cron:
+        name: httpd-2.4.49.tar.gz
+        special_time: reboot
+        job: /usr/local/apache2/bin/apachectl

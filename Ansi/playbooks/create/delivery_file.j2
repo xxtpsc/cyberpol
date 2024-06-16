@@ -1,0 +1,8 @@
+- name: Deilvery file
+  hosts: all
+  become: yes
+  tasks:
+    - name: Delivery file {{assign_name}}
+      copy:
+        src: {{src_to_file}}
+        dest: {{path_to_file}}

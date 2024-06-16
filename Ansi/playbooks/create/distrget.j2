@@ -1,0 +1,29 @@
+---
+- name: Install packages
+  hosts: all
+  tasks:
+    - name: Ensure FTP client is installed
+      apt:
+        name: ftp
+        state: present
+
+    - name: Downoload from ftp server
+      get_url:
+        url: ftp://ip/{{name_package}}.deb
+        dest: /tmp/{{name_package}}
+        mode: '0644'
+
+    - name: Install the deb package {{name_package}}
+      apt:
+        deb: /tmp/{{name_package}}.deb
+
+    - name: Upload cfg file {{name_package}}
+      copy:
+        src: {{src_path}}
+        dest: {{dest_path}}
+
+    - name: Restart {{name_package}}
+      systemd:
+        name: {{name_service}}
+        state: restarted
+

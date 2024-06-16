@@ -1,0 +1,16 @@
+hosts: srvubu2
+  become: yes
+  tasks:
+  - name: Create user
+    user:
+      name: "User1"
+      state: present
+      shell: "/bin/bash"
+      home: /home/User1
+      create_home: yes
+      password: 12345678
+  - name: Add user to sudoers
+    lineinfile:
+      path: /etc/sudoers
+      line: "User1 ALL=(ALL) NOPASSWD: /usr/bin/docker"
+      state: present

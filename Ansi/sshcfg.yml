@@ -1,0 +1,30 @@
+- hosts: debsrv1
+  become: yes
+  tasks:
+    - name: Insecure SSH configuration - Enable SSH protocol 1
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^#?Protocol'
+        line: 'Protocol 1'
+      #notify: restart sshd
+      tags: ensshv1 
+
+    - name: Аутентификация по пустому паролю
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^#?PermitEmptyPasswords'
+        line: 'PermitEmptyPasswords yes'
+      tags: authzero
+
+    - name: Аутентификация для root
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^#?PermitRootLogin'
+        line: 'PermitRootLogin yes'
+      tags: authroot 
+
+    - name: Создание пользователя с пустым паролем
+      user:
+        name: User1
+        password: ""
+      tags: emptpassuser

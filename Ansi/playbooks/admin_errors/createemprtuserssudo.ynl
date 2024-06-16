@@ -1,0 +1,25 @@
+- name: Создание пользователя с пустым паролем
+  hosts: debsrv10
+  become: yes
+  vars:
+    user_name: your_username
+
+  tasks:
+    - name: Установка sudo
+      apt:
+        name: sudo
+        state: present
+
+    - name: Создание пользователя
+      user:
+        name: "{{ user_name }}"
+        password: ""
+        create_home: yes
+        shell: /bin/bash
+
+    - name: Добавление пользователя в sudoers
+      lineinfile:
+        path: /etc/sudoers
+        state: present
+        insertafter: '^%sudo'
+        line: '{{ user_name }} ALL=(ALL) NOPASSWD:ALL'

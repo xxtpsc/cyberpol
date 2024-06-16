@@ -1,0 +1,10 @@
+- hosts: all
+  become: yes
+  tasks:    
+    - name: Disable APT install Apache2
+      copy:
+        dest: /etc/apt/preferences.d/00-apache2
+        content: |
+          Package: apache2
+          Pin: release *
+          Pin-Priority: -1

@@ -1,0 +1,11 @@
+- name: Create a user in Linux
+  hosts: all
+  become: yes
+  tasks:
+    - name: Ensure the user exists
+      user:
+        name: dolbaeb
+        state: present
+        shell: /bin/bash
+        password: "{{ 'qwe1243' | password_hash('sha512') }}"
+        createhome: yes

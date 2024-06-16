@@ -1,0 +1,61 @@
+- name: Configure and compile Linux kernel 5.0.15
+  hosts: all
+  become: yes
+  tasks:
+    - name: Ensure required packages are installed
+      apt:
+        name: 
+          - build-essential
+          - libncurses-dev
+          - bison
+          - flex
+          - libssl-dev
+          - libelf-dev
+          - bc
+        state: present
+        update_cache: yes
+
+    - name: Download Linux kernel source
+      get_url:
+        url: https://cdn.kernel.org/pub/linux/kernel/v4.x/linux-4.19.1.tar.xz
+        dest: /tmp/linux-4.19.1.tar.xz
+
+    - name: Extract Linux kernel source
+      unarchive:
+        src: /tmp/linux-4.19.1.tar.xz
+        dest: /tmp/
+        remote_src: yes
+
+    - name: Copy current kernel config
+      command: cp /boot/config-{{ ansible_kernel }} /tmp/linux-4.19.1/.config
+      args:
+        creates: /tmp/linux-4.19.1/.config
+
+    - name: Make olddefconfig
+      command: make olddefconfig
+      args:
+        chdir: /tmp/linux-4.19.1/
+
+    - name: Disable UEFI certificate support
+      lineinfile:
+        path: /tmp/linux-4.19.1/.config
+        regexp: "^CONFIG_SYSTEM_TRUSTED_KEYS="
+        line: "CONFIG_SYSTEM_TRUSTED_KEYS=\"\""
+
+    - name: Compile the Linux kernel
+      command: make -j "{{ ansible_processor_cores * 2 }}"
+      args:
+        chdir: /tmp/linux-4.19.1/
+
+    - name: Install modules
+      command: make modules_install
+      args:
+        chdir: /tmp/linux-4.19.1/
+
+    - name: Install the new kernel
+      command: make install
+      args:
+        chdir: /tmp/linux-4.19.1/
+
+    - name: Update grub configuration
+      command: update-grub

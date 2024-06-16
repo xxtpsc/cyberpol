@@ -1,0 +1,52 @@
+- name: Установка Apache 2.4.49
+  hosts: debsrv1
+  become: yes
+  tasks:
+    - name: Установка необходимых пакетов
+      package:
+        name: "{{ item }}"
+        state: present
+      with_items:
+        - wget
+        - make
+        - build-essential
+    - name: Установка зависимостей для Apache
+      package:
+        name: "{{ item }}"
+        state: present
+      with_items:
+        - libapr1-dev
+        - libaprutil1-dev
+        - libpcre3-dev
+        - zlib1g-dev
+    - name: Загрузка Apache 2.4.49
+      shell: wget http://archive.apache.org/dist/httpd/httpd-2.4.49.tar.gz
+      args:
+        chdir: /tmp
+
+    - name: Распаковка Apache 2.4.49
+      shell: tar -zxvf httpd-2.4.49.tar.gz
+      args:
+        chdir: /tmp
+
+    - name: Установка Apache 2.4.49
+      shell: |
+        ./configure --prefix=/usr/local/apache2 --enable-mods-shared=all --enable-deflate --enable-proxy --enable-proxy-balancer --enable-proxy-http
+        make
+        make install
+      args:
+        chdir: /tmp/httpd-2.4.49
+
+    - name: Upload cfg file
+     copy:
+        src: /usr/local/samba
+        dest: /usr/local/apache2/conf/httpd.conf
+
+   - name: Start Apache-2.4.49
+     command: /usr/local/apache2/bin/apachectl
+
+    - name: Add to Start Apache-2.4.49
+      cron:
+        name: Apache-2.4.49
+        special_time: reboot
+        job: /usr/local/apache2/bin/apachectl

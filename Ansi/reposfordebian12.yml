@@ -1,0 +1,21 @@
+- hosts: debsrv1
+  become: yes
+  tasks:
+    - name: Add Debian 9 (Stretch) archive repository
+      apt_repository:
+        repo: 'deb http://archive.debian.org/debian stretch main'
+        state: present
+
+    - name: Add Debian 10 (Buster) archive repository
+      apt_repository:
+        repo: 'deb http://archive.debian.org/debian buster main'
+        state: present
+
+    - name: Disable valid-until check
+      copy:
+        dest: /etc/apt/apt.conf.d/99no-check-valid-until
+        content: 'Acquire::Check-Valid-Until "false";'
+
+    - name: Update apt cache
+      apt:
+        update_cache: yes
