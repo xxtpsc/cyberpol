@@ -1,9 +1,0 @@
-- name: Create exploitable bash
-  hosts: linux  
-  tasks:
-  - name: Create bash 
-    file:
-      path: /tmp/secret.sh
-      state: touch 
-      mode: 0766
-      owner: srvubu
