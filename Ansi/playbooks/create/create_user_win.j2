@@ -1,0 +1,13 @@
+---
+- name: Create a {{username}}} with specified roles
+  hosts: all
+  tasks:
+    - name: Create a new user and add to specified groups
+      win_user:
+        name: "{{ username }}"
+        password: "{{ password }}"
+        groups:
+          {% for group in groups %}
+          - "{{ group }}"
+          {% endfor %}
+        state: present
