@@ -1,0 +1,95 @@
+# Функция для проверки корректности IP-адреса
+function Test-ValidIP {
+    param ([string]$ip)
+    # Удаляем лишние пробелы и символы
+    $ip = $ip.Trim()
+    # Проверяем формат IPv4
+    return $ip -match '^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$'
+}
+
+# Функция для преобразования IP-адреса в числовое значение
+function Convert-IPToInt {
+    param ([string]$ip)
+    # Удаляем лишние пробелы и символы
+    $ip = $ip.Trim()
+    $octets = $ip -split '\.'
+    return [uint32]([uint32]$octets[0] -shl 24) -bor ([uint32]$octets[1] -shl 16) -bor ([uint32]$octets[2] -shl 8) -bor [uint32]$octets[3]
+}
+
+# Функция для преобразования числового значения обратно в IP-адрес
+function Convert-IntToIP {
+    param ([uint32]$int)
+    return "$((($int -band 0xFF000000) -shr 24)).$((($int -band 0x00FF0000) -shr 16)).$((($int -band 0x0000FF00) -shr 8)).$(($int -band 0x000000FF))"
+}
+
+# Функция для вычисления минимальной подсети, охватывающей все IP-адреса
+function Get-SubnetRange {
+    param ([string[]]$ips)
+    $minIP = [uint32]::MaxValue
+    $maxIP = [uint32]::MinValue
+
+    foreach ($ip in $ips) {
+        if (Test-ValidIP $ip) {
+            try {
+                $intIP = Convert-IPToInt $ip
+                if ($intIP -lt $minIP) { $minIP = $intIP }
+                if ($intIP -gt $maxIP) { $maxIP = $intIP }
+            } catch {
+                Write-Warning "Ошибка при обработке IP-адреса: $ip"
+            }
+        } else {
+            Write-Warning "Некорректный IP-адрес: $ip"
+        }
+    }
+
+    $range = $maxIP - $minIP
+    $mask = 32
+
+    while ($range -gt 0) {
+        $range = $range -shr 1
+        $mask--
+    }
+
+    $subnet = Convert-IntToIP ($minIP -band (-1 -shl (32 - $mask)))
+    return "$subnet/$mask"
+}
+
+# Функция для группировки IP-адресов по первым двум октетам и вычисления подсетей
+function Get-SubnetsByFirstTwoOctets {
+    param ([string[]]$ips)
+    $groupedIPs = @{}
+
+    # Группируем IP-адреса по первым двум октетам
+    foreach ($ip in $ips) {
+        if (Test-ValidIP $ip) {
+            $octets = $ip -split '\.'
+            $firstTwoOctets = "$($octets[0]).$($octets[1])"
+            if (-not $groupedIPs.ContainsKey($firstTwoOctets)) {
+                $groupedIPs[$firstTwoOctets] = @()
+            }
+            $groupedIPs[$firstTwoOctets] += $ip
+        } else {
+            Write-Warning "Некорректный IP-адрес: $ip"
+        }
+    }
+
+    # Вычисляем подсети для каждой группы
+    $subnets = @{}
+    foreach ($key in $groupedIPs.Keys) {
+        $subnets[$key] = Get-SubnetRange $groupedIPs[$key]
+    }
+
+    return $subnets
+}
+
+# Чтение IP-адресов из файла
+$ipFile = "C:\path\to\your\ipfile.txt"
+$ips = Get-Content $ipFile
+
+# Получение подсетей, сгруппированных по первым двум октетам
+$subnets = Get-SubnetsByFirstTwoOctets $ips
+
+# Вывод результата
+foreach ($key in $subnets.Keys) {
+    Write-Output "Подсеть для IP-адресов, начинающихся с $key.0.0: $($subnets[$key])"
+}
