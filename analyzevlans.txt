@@ -1,0 +1,129 @@
+<#
+    Анализирует конфигурацию Cisco из файла и сравнивает VLAN'ы на устройстве с VLAN'ами на интерфейсах.
+.DESCRIPTION
+    Скрипт читает конфигурацию Cisco из текстового файла (например, вывод 'show running-config') и выводит:
+    - Список VLAN'ов, созданных на устройстве.
+    - VLAN'ы, назначенные на интерфейсах (access/trunk).
+    - VLAN'ы, которые есть в конфиге, но не используются на интерфейсах.
+    - VLAN'ы на интерфейсах, которых нет в конфигурации VLAN'ов (возможные ошибки).
+.EXAMPLE
+    .\Parse-CiscoVlans.ps1 -ConfigFile "C:\temp\cisco_switch_config.txt"
+
+#>
+
+param (
+    [Parameter(Mandatory=$true, HelpMessage="Путь к файлу с конфигурацией Cisco")]
+    [string]$ConfigFile
+)
+
+# Проверка существования файла
+if (-not (Test-Path $ConfigFile)) {
+    Write-Host "Ошибка: Файл '$ConfigFile' не найден!" -ForegroundColor Red
+    exit 1
+}
+
+# Функция для парсинга конфига Cisco
+function Parse-CiscoConfig {
+    param (
+        [string]$ConfigText
+    )
+
+    $VlansOnDevice = @()
+    $VlansOnInterfaces = @{}
+
+    $lines = $ConfigText -split "`n"
+    $currentInterface = $null
+
+    foreach ($line in $lines) {
+        $line = $line.Trim()
+
+        # Парсим VLAN'ы в секции 'vlan'
+        if ($line -match "^vlan\s+(\d+)") {
+            $VlansOnDevice += $matches[1]
+        }
+
+        # Парсим интерфейсы
+        if ($line -match "^interface\s+(.+)$") {
+            $currentInterface = $matches[1].Trim()
+        }
+        elseif ($currentInterface) {
+            # Access VLAN
+            if ($line -match "switchport access vlan\s+(\d+)") {
+                $vlanId = $matches[1]
+                if (-not $VlansOnInterfaces.ContainsKey($vlanId)) {
+                    $VlansOnInterfaces[$vlanId] = @()
+                }
+                $VlansOnInterfaces[$vlanId] += $currentInterface
+            }
+            # Trunk VLANs (разбираем диапазоны, например, "10,20-30,40")
+            elseif ($line -match "switchport trunk allowed vlan\s+(.+)") {
+                $vlans = $matches[1] -split "," | ForEach-Object { $_.Trim() }
+                foreach ($vlan in $vlans) {
+                    if ($vlan -match "(\d+)-(\d+)") {
+                        $start = [int]$matches[1]
+                        $end = [int]$matches[2]
+                        $range = $start..$end | ForEach-Object { $_.ToString() }
+                        foreach ($vlanId in $range) {
+                            if (-not $VlansOnInterfaces.ContainsKey($vlanId)) {
+                                $VlansOnInterfaces[$vlanId] = @()
+                            }
+                            $VlansOnInterfaces[$vlanId] += $currentInterface
+                        }
+                    }
+                    else {
+                        if (-not $VlansOnInterfaces.ContainsKey($vlan)) {
+                            $VlansOnInterfaces[$vlan] = @()
+                        }
+                        $VlansOnInterfaces[$vlan] += $currentInterface
+                    }
+                }
+            }
+        }
+    }
+
+    return @{
+        VlansOnDevice = ($VlansOnDevice | Sort-Object -Unique)
+        VlansOnInterfaces = $VlansOnInterfaces
+    }
+}
+
+# Чтение конфигурации из файла
+$configText = Get-Content -Path $ConfigFile -Raw
+
+# Парсинг конфига
+$result = Parse-CiscoConfig -ConfigText $configText
+
+# Вывод результатов
+Write-Host "`n=== Созданные VLAN'ы на устройстве ===" -ForegroundColor Green
+$result.VlansOnDevice | ForEach-Object { Write-Host "VLAN $_" }
+
+Write-Host "`n=== VLAN'ы на интерфейсах ===" -ForegroundColor Yellow
+foreach ($vlan in $result.VlansOnInterfaces.Keys | Sort-Object { [int]$_ }) {
+    $interfaces = $result.VlansOnInterfaces[$vlan] -join ", "
+    Write-Host "VLAN $vlan (на интерфейсах: $interfaces)"
+}
+
+# Сравнение VLAN'ов
+$unusedVlans = $result.VlansOnDevice | Where-Object { $_ -notin $result.VlansOnInterfaces.Keys }
+$undefinedVlans = $result.VlansOnInterfaces.Keys | Where-Object { $_ -notin $result.VlansOnDevice }
+
+Write-Host "`n=== Анализ расхождений ===" -ForegroundColor Magenta
+
+if ($unusedVlans) {
+    Write-Host "`nVLAN'ы, созданные на устройстве, но не назначенные на интерфейсы:" -ForegroundColor Red
+    $unusedVlans | ForEach-Object { Write-Host "VLAN $_" }
+}
+else {
+    Write-Host "`nНеиспользуемых VLAN'ов не обнаружено." -ForegroundColor Green
+}
+
+if ($undefinedVlans) {
+    Write-Host "`nVLAN'ы на интерфейсах, которых нет в конфигурации VLAN'ов (ошибка!):" -ForegroundColor Red
+    foreach ($vlan in $undefinedVlans) {
+        $interfaces = $result.VlansOnInterfaces[$vlan] -join ", "
+        Write-Host "VLAN $vlan (используется на: $interfaces)"
+    }
+}
+else {
+    Write-Host "`nНеопределенных VLAN'ов на интерфейсах не обнаружено." -ForegroundColor Green
+}
